@@ -1,6 +1,32 @@
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel, HttpUrl, Field
+from pydantic import BaseModel, HttpUrl, Field, EmailStr
+
+# 認証関連のスキーマ
+class UserCreate(BaseModel):
+    """ユーザー登録用スキーマ"""
+    email: EmailStr = Field(..., description="メールアドレス")
+    password: str = Field(..., min_length=6, description="パスワード（6文字以上）")
+
+class UserLogin(BaseModel):
+    """ユーザーログイン用スキーマ"""
+    email: EmailStr = Field(..., description="メールアドレス")
+    password: str = Field(..., description="パスワード")
+
+class UserResponse(BaseModel):
+    """ユーザー応答用スキーマ"""
+    id: int
+    email: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class Token(BaseModel):
+    """トークン応答用スキーマ"""
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
 
 # URL関連のスキーマ
 class URLCreate(BaseModel):

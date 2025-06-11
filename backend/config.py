@@ -2,64 +2,88 @@
 Configuration management for the URL shortener backend.
 """
 import os
-from typing import Optional
+from typing import Optional, List
+from pydantic_settings import BaseSettings
 
 
-class Settings:
-    """Application settings with environment variable support."""
+class Settings(BaseSettings):
+    """アプリケーション設定"""
     
-    # Database settings
-    database_url: str = "sqlite:///./data/url_shortener.db"
-    database_echo: bool = False
+    # データベース設定
+    database_url: str = "sqlite:///./url_shortener.db"
     
-    # API settings
-    api_title: str = "URL Shortener API"
-    api_version: str = "1.0.0"
-    api_description: str = "A simple URL shortener service"
+    # アプリケーション設定
+    app_name: str = "URL短縮サービス"
+    app_version: str = "1.0.0"
+    debug: bool = False
     
-    # CORS settings
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
-    cors_allow_credentials: bool = True
-    cors_allow_methods: list[str] = ["*"]
-    cors_allow_headers: list[str] = ["*"]
+    # CORS設定
+    cors_origins: List[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://frontend:3000"  # Docker環境用
+    ]
     
-    # Security settings
-    secret_key: str = "your-secret-key-change-in-production"
+    # CORS許可メソッド（セキュリティ強化：必要なメソッドのみ許可）
+    cors_methods: List[str] = [
+        "GET",
+        "POST", 
+        "DELETE",
+        "OPTIONS"  # プリフライトリクエスト用
+    ]
+    
+    # CORS許可ヘッダー（セキュリティ強化：必要なヘッダーのみ許可）
+    cors_headers: List[str] = [
+        "Accept",
+        "Accept-Language",
+        "Content-Language",
+        "Content-Type",
+        "Authorization",  # JWT認証用
+        "X-Requested-With"  # AJAX識別用
+    ]
+    
+    # URL短縮設定
+    base_url: str = "http://localhost:8000"
+    short_code_length: int = 8
+    
+    # JWT認証設定
+    secret_key: str = "your-secret-key-change-this-in-production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     
-    # Application settings
-    short_code_length: int = 6
-    base_url: str = "http://localhost:8000"
+    # セキュリティ設定
+    bcrypt_rounds: int = 12
     
-    # Logging settings
-    log_level: str = os.getenv("LOG_LEVEL", "INFO")
-    log_format: str = os.getenv("LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    # ページネーション設定
+    default_page_size: int = 20
+    max_page_size: int = 100
     
-    def __init__(self):
-        """Initialize settings with environment variables."""
-        self.database_url = os.getenv("DATABASE_URL", "sqlite:///./data/url_shortener.db")
-        self.database_echo = os.getenv("DATABASE_ECHO", "False").lower() == "true"
-        
-        self.api_title = os.getenv("API_TITLE", "URL Shortener API")
-        self.api_version = os.getenv("API_VERSION", "1.0.0")
-        self.api_description = os.getenv("API_DESCRIPTION", "A simple URL shortener service")
-        
-        self.cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
-        self.cors_allow_credentials = os.getenv("CORS_ALLOW_CREDENTIALS", "True").lower() == "true"
-        self.cors_allow_methods = ["*"]
-        self.cors_allow_headers = ["*"]
-        
-        self.secret_key = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
-        self.algorithm = os.getenv("ALGORITHM", "HS256")
-        self.access_token_expire_minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-        
-        self.short_code_length = int(os.getenv("SHORT_CODE_LENGTH", "6"))
-        self.base_url = os.getenv("BASE_URL", "http://localhost:8000")
-        
-        self.log_level = os.getenv("LOG_LEVEL", "INFO")
-        self.log_format = os.getenv("LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    # ログ設定
+    log_level: str = "INFO"
+    log_format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    
+    # 環境変数から設定を読み込み
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
 
 
-# Global settings instance
-settings = Settings() 
+# 設定インスタンス
+settings = Settings()
+
+# 開発環境での設定上書き
+if os.getenv("ENVIRONMENT") == "development":
+    settings.debug = True
+    settings.log_level = "DEBUG"
+
+# 本番環境での設定上書き
+if os.getenv("ENVIRONMENT") == "production":
+    settings.debug = False
+    settings.log_level = "WARNING"
+    # 本番環境では必ず環境変数からシークレットキーを取得
+    if os.getenv("SECRET_KEY"):
+        settings.secret_key = os.getenv("SECRET_KEY")
+    else:
+        raise ValueError("本番環境ではSECRET_KEY環境変数の設定が必要です") 

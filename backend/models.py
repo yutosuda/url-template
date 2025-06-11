@@ -3,6 +3,15 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
 
+class User(Base):
+    """ユーザーテーブル - 認証管理"""
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    email = Column(String(255), unique=True, nullable=False, index=True, comment="メールアドレス")
+    hashed_password = Column(String(255), nullable=False, comment="ハッシュ化パスワード")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), comment="登録日時")
+
 class URL(Base):
     """URLテーブル - 短縮URLの管理"""
     __tablename__ = "urls"

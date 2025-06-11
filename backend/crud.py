@@ -3,8 +3,44 @@ import string
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
-from models import URL, Click
-from schemas import URLCreate, ClickCreate
+from models import URL, Click, User
+from schemas import URLCreate, ClickCreate, UserCreate
+from passlib.context import CryptContext
+
+# パスワードハッシュ化設定
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """パスワード検証"""
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password: str) -> str:
+    """パスワードハッシュ化"""
+    return pwd_context.hash(password)
+
+# ユーザー関連のCRUD操作
+def get_user_by_email(db: Session, email: str) -> Optional[User]:
+    """メールアドレスでユーザーを取得"""
+    return db.query(User).filter(User.email == email).first()
+
+def create_user(db: Session, user: UserCreate) -> User:
+    """ユーザー作成"""
+    hashed_password = get_password_hash(user.password)
+    db_user = User(
+        email=user.email,
+        hashed_password=hashed_password
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
+    """ユーザー認証"""
+    user = get_user_by_email(db, email)
+    if not user or not verify_password(password, user.hashed_password):
+        return None
+    return user
 
 def generate_short_code(length: int = 8) -> str:
     """短縮コードを生成する"""
