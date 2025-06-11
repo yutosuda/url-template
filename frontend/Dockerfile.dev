@@ -1,0 +1,21 @@
+FROM node:20-alpine
+
+# タイムゾーンパッケージをインストール
+RUN apk add --no-cache tzdata
+
+WORKDIR /app
+
+# パッケージファイルをコピー
+COPY package.json package-lock.json ./
+
+# 依存関係をインストール（開発依存関係も含める）
+RUN npm ci
+
+# アプリケーションコードをコピー
+COPY . .
+
+# ポート3000を公開
+EXPOSE 3000
+
+# 開発サーバーを起動（ホットリロード有効）
+CMD ["npm", "run", "dev"] 
