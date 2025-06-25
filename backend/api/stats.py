@@ -43,10 +43,10 @@ async def get_stats(
         total_clicks = crud.get_total_clicks(db)
         top_urls_data = crud.get_top_urls(db, limit=5)
         
-        # トップURLのレスポンス形式に変換
+        # トップURLのレスポンス形式に変換（/r/プレフィックス付き）
         top_urls = []
         for url in top_urls_data:
-            short_url = f"{settings.base_url}/{url.short_code}"
+            short_url = f"{settings.base_url}/r/{url.short_code}"
             top_urls.append(schemas.URLResponse(
                 id=url.id,
                 original_url=url.original_url,

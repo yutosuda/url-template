@@ -9,6 +9,9 @@ services:
     environment:
       - TZ=Asia/Tokyo
       - DATABASE_URL=sqlite:///./data/app.db
+      - ENVIRONMENT=production
+      - BASE_URL=https://url-click-manager.xvps.jp
+      - SECRET_KEY=url-shortener-production-secret-key-2024
     restart: unless-stopped
 
   frontend:
@@ -22,7 +25,7 @@ services:
       - "3000:3000"
     environment:
       - TZ=Asia/Tokyo
-      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - NEXT_PUBLIC_API_URL=https://url-click-manager.xvps.jp
     depends_on:
       - backend
     restart: unless-stopped

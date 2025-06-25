@@ -1,0 +1,65 @@
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - backend_data:/app/data
+      - ./backend/logs:/app/logs
+    ports:
+      - "8000:8000"
+    environment:
+      - TZ=Asia/Tokyo
+      - DATABASE_URL=sqlite:///./data/app.db
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - SECRET_KEY=url-click-manager-secret-key-2025-production
+      - BASE_URL=https://url-click-manager.xvps.jp
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/simple"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - TZ=Asia/Tokyo
+      - NEXT_PUBLIC_API_URL=https://url-click-manager.xvps.jp
+      - NODE_ENV=production
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+volumes:
+  backend_data:
+    driver: local
+  nginx_logs:
+    driver: local 

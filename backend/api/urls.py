@@ -50,10 +50,10 @@ async def create_short_url(
         )
     
     try:
-        db_url = crud.create_url(db=db, url=url)
+        db_url = crud.create_url(db=db, url_create=url)
         
-        # レスポンス用に短縮URLを生成
-        short_url = f"{settings.base_url}/{db_url.short_code}"
+        # レスポンス用に短縮URLを生成（/r/プレフィックス付き）
+        short_url = f"{settings.base_url}/r/{db_url.short_code}"
         
         response = schemas.URLResponse(
             id=db_url.id,
@@ -91,10 +91,10 @@ async def get_urls(
         urls = crud.get_urls(db, skip=skip, limit=limit)
         total = crud.get_urls_count(db)
         
-        # レスポンス用にshort_urlを追加
+        # レスポンス用にshort_urlを追加（/r/プレフィックス付き）
         url_responses = []
         for url in urls:
-            short_url = f"{settings.base_url}/{url.short_code}"
+            short_url = f"{settings.base_url}/r/{url.short_code}"
             url_responses.append(schemas.URLResponse(
                 id=url.id,
                 original_url=url.original_url,

@@ -1,7 +1,7 @@
 FROM node:20-alpine
 
-# タイムゾーンパッケージをインストール
-RUN apk add --no-cache tzdata
+# タイムゾーンパッケージとcurlをインストール
+RUN apk add --no-cache tzdata curl
 
 WORKDIR /app
 

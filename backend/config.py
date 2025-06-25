@@ -17,13 +17,15 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
     debug: bool = False
     
-    # CORS設定
+    # CORS設定 - 本番環境のドメインを追加
     cors_origins: List[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
-        "http://frontend:3000"  # Docker環境用
+        "http://frontend:3000",  # Docker環境用
+        "https://url-click-manager.xvps.jp",  # 本番環境
+        "http://url-click-manager.xvps.jp"   # 本番環境（HTTP）
     ]
     
     # CORS許可メソッド（セキュリティ強化：必要なメソッドのみ許可）
@@ -44,8 +46,8 @@ class Settings(BaseSettings):
         "X-Requested-With"  # AJAX識別用
     ]
     
-    # URL短縮設定
-    base_url: str = "http://localhost:8000"
+    # URL短縮設定 - 環境変数対応
+    base_url: str = os.getenv("BASE_URL", "http://localhost:8000")
     short_code_length: int = 8
     
     # JWT認証設定
@@ -86,4 +88,8 @@ if os.getenv("ENVIRONMENT") == "production":
     if os.getenv("SECRET_KEY"):
         settings.secret_key = os.getenv("SECRET_KEY")
     else:
-        raise ValueError("本番環境ではSECRET_KEY環境変数の設定が必要です") 
+        raise ValueError("本番環境ではSECRET_KEY環境変数の設定が必要です")
+    
+    # 本番環境でのbase_url自動設定
+    if not os.getenv("BASE_URL"):
+        settings.base_url = "https://url-click-manager.xvps.jp" 

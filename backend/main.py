@@ -42,8 +42,12 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
-# ルートの登録
-app.include_router(router)
+# ルートの登録（APIプレフィックス付き）
+app.include_router(router, prefix="/api")
+
+# リダイレクト機能を個別に登録（プレフィックスなし）
+from api.redirect import router as redirect_router
+app.include_router(redirect_router)
 
 @app.get("/")
 async def root():

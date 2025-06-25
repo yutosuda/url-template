@@ -19,7 +19,18 @@ router = APIRouter(tags=["redirect"])
 
 @router.get("/{short_code}")
 async def redirect_to_original(short_code: str, request: Request, db: Session = Depends(get_db)):
-    """短縮URLから元URLへリダイレクト"""
+    """短縮URLから元URLへリダイレクト（直接パス）"""
+    return await _perform_redirect(short_code, request, db)
+
+
+@router.get("/r/{short_code}")
+async def redirect_to_original_with_prefix(short_code: str, request: Request, db: Session = Depends(get_db)):
+    """短縮URLから元URLへリダイレクト（/r/プレフィックス付き）"""
+    return await _perform_redirect(short_code, request, db)
+
+
+async def _perform_redirect(short_code: str, request: Request, db: Session):
+    """リダイレクト処理の共通ロジック"""
     logger.info(f"Redirecting: {short_code} from IP: {request.client.host if request.client else 'unknown'}")
     
     try:
@@ -43,7 +54,7 @@ async def redirect_to_original(short_code: str, request: Request, db: Session = 
         )
         
         # クリック記録とカウント更新
-        crud.create_click(db=db, url_id=db_url.id, click=click_data)
+        crud.create_click(db=db, url_id=db_url.id, click_data=click_data)
         crud.increment_click_count(db=db, url_id=db_url.id)
         
         logger.info(f"Click tracked for {short_code}, redirecting to {db_url.original_url}")
